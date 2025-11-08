@@ -18,6 +18,15 @@ const USERS = [
   { username: "roberta", password: "matheus" },
 ];
 
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://nossalista.plets.win",
+];
+
+app.use(cors({
+  origin: allowedOrigins,
+}));
+
 function loadMovies() {
   try {
     const raw = fs.readFileSync(DATA_FILE, "utf8");

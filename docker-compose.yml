@@ -5,7 +5,7 @@ services:
     container_name: movie-backend
     env_file: ./backend/.env
     ports:
-      - "5000:5000"
+      - "5000"
     volumes:
       - ./backend/data/movies.json:/app/data/movies.json
 
@@ -18,3 +18,5 @@ services:
       - backend
     env_file:
       - ./frontend/.env
+    environment:
+      - VITE_API_URL=/api

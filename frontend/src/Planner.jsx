@@ -4,7 +4,9 @@ import AddMovieForm from "./components/AddMovieForm";
 import MovieCard from "./components/MovieCard";
 import MovieCalendar from "./components/Calendar";
 
-const API_URL = "http://localhost:5000/api";
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  `${window.location.origin.replace(/\/$/, "")}/api`;
 
 export default function Planner({ username }) {
   const [movies, setMovies] = useState([]);
