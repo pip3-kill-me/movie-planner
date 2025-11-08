@@ -75,30 +75,43 @@ app.get("/api/movies", (req, res) => {
 });
 
 
+// --- ADD MOVIE ---
 app.post("/api/add-movie", async (req, res) => {
-  const { imdbID, Title, Year, Poster } = req.body;
+  const { imdbID, Title, Year, Poster, title, year, poster } = req.body;
 
   try {
     const omdbKey = process.env.OMDB_KEY || process.env.VITE_OMDB_KEY;
     let detail = {};
     if (imdbID) {
-      const r = await fetch(`https://www.omdbapi.com/?apikey=${omdbKey}&i=${imdbID}&plot=short`);
+      const r = await fetch(
+        `https://www.omdbapi.com/?apikey=${omdbKey}&i=${imdbID}&plot=short`
+      );
+      detail = await r.json();
+    } else if (title) {
+      const r = await fetch(
+        `https://www.omdbapi.com/?apikey=${omdbKey}&t=${encodeURIComponent(
+          title
+        )}&plot=short`
+      );
       detail = await r.json();
     }
 
     const movie = {
       id: imdbID || detail.imdbID || String(Date.now()),
-      title: detail.Title || Title || "Sem título",
-      year: detail.Year || Year || "",
+      title: detail.Title || Title || title || "Sem título",
+      year: detail.Year || Year || year || "",
       poster:
-        (detail.Poster && detail.Poster !== "N/A" ? detail.Poster : null) ??
-        (Poster && Poster !== "N/A" ? Poster : "/placeholder.png"),
+        detail.Poster && detail.Poster !== "N/A"
+          ? detail.Poster
+          : Poster && Poster !== "N/A"
+          ? Poster
+          : "/placeholder.png",
       description: detail.Plot || "",
       date: "",
       host: "",
     };
 
-    // load current list from disk defensively
+    // Load, append, save
     let list = [];
     try {
       list = JSON.parse(fs.readFileSync(DATA_PATH, "utf8"));
@@ -106,13 +119,13 @@ app.post("/api/add-movie", async (req, res) => {
     } catch {
       list = [];
     }
-
     list.push(movie);
     fs.writeFileSync(DATA_PATH, JSON.stringify(list, null, 2));
-    return res.json(movie);
+
+    res.json(movie);
   } catch (err) {
     console.error("Add movie failed:", err);
-    return res.status(500).json({ error: "Failed to add movie" });
+    res.status(500).json({ error: "Failed to add movie" });
   }
 });
 
