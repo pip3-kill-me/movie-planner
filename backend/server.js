@@ -1,53 +1,64 @@
 import express from "express";
 import fs from "fs";
-import path from "path";
 import cors from "cors";
 import bodyParser from "body-parser";
-import axios from "axios";
-import "dotenv/config";
+import path from "path";
 import { fileURLToPath } from "url";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
+const PORT = 5000;
+
+// Basic middleware
 app.use(cors());
 app.use(bodyParser.json());
 
-const DATA_FILE = path.join(__dirname, "data", "movies.json");
-const USERS = [
-  { username: "matheus", password: "roberta" },
-  { username: "roberta", password: "matheus" },
-];
+// Path helpers (so relative paths work in Docker)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const DATA_PATH = path.join(__dirname, "data", "movies.json");
+const USERS_PATH = path.join(__dirname, "data", "users.json");
 
-const allowedOrigins = [
-  "http://localhost:3000",
-  "https://nossalista.plets.win",
-];
+// --- Load or initialize persistent data ---
+let MOVIES = [];
+let USERS = [];
 
-app.use(cors({
-  origin: allowedOrigins,
-}));
-
-function loadMovies() {
-  try {
-    const raw = fs.readFileSync(DATA_FILE, "utf8");
-    return JSON.parse(raw || "[]");
-  } catch {
-    return [];
+try {
+  if (fs.existsSync(DATA_PATH)) {
+    MOVIES = JSON.parse(fs.readFileSync(DATA_PATH, "utf8"));
+  } else {
+    fs.writeFileSync(DATA_PATH, "[]");
   }
+} catch (err) {
+  console.error("Error loading movies.json:", err);
+  MOVIES = [];
 }
 
-function saveMovies(movies) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(movies, null, 2));
+try {
+  if (fs.existsSync(USERS_PATH)) {
+    USERS = JSON.parse(fs.readFileSync(USERS_PATH, "utf8"));
+  } else {
+    USERS = [
+      { username: "matheus", password: "roberta" },
+      { username: "roberta", password: "matheus" },
+    ];
+    fs.writeFileSync(USERS_PATH, JSON.stringify(USERS, null, 2));
+  }
+} catch (err) {
+  console.error("Error loading users.json:", err);
+  USERS = [
+    { username: "matheus", password: "roberta" },
+    { username: "roberta", password: "matheus" },
+  ];
 }
 
-// LOGIN
+// --- LOGIN ROUTE ---
 app.post("/api/login", (req, res) => {
   const { username, password } = req.body;
-
-  // find the matching user in the array
   const user = USERS.find(
     (u) => u.username === username && u.password === password
   );
+
+  console.log("Login attempt:", req.body, "=>", user ? "OK" : "FAIL");
 
   if (user) {
     return res.json({ success: true, username: user.username });
@@ -58,55 +69,37 @@ app.post("/api/login", (req, res) => {
   }
 });
 
-// MOVIES
-app.get("/api/movies", (req, res) => res.json(loadMovies()));
+// --- MOVIE ROUTES ---
+app.get("/api/movies", (req, res) => {
+  res.json(MOVIES);
+});
 
-app.post("/api/add-movie", async (req, res) => {
-  const { title, year, poster, plot } = req.body;
-  const movies = loadMovies();
-  const apiKey = process.env.OMDB_API_KEY;
-  let info = { Title: title, Year: year, Poster: poster, Plot: plot };
-
-  try {
-    if (!poster) {
-      const { data } = await axios.get(
-        `https://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=${apiKey}`
-      );
-      if (data && data.Response === "True") info = data;
-    }
-  } catch (err) {
-    console.warn("OMDb lookup failed:", err.message);
-  }
-
-  const newMovie = {
-    id: Date.now().toString(),
-    title: info.Title || title,
-    year: info.Year || "",
-    poster: info.Poster && info.Poster !== "N/A" ? info.Poster : "",
-    plot: info.Plot || "",
-  };
-
-  movies.push(newMovie);
-  saveMovies(movies);
-  res.json(newMovie);
+app.post("/api/add-movie", (req, res) => {
+  const movie = req.body;
+  MOVIES.push(movie);
+  fs.writeFileSync(DATA_PATH, JSON.stringify(MOVIES, null, 2));
+  res.json({ success: true });
 });
 
 app.post("/api/schedule", (req, res) => {
-  const { id, date, host } = req.body; // host = "matheus" or "roberta"
-  const movies = loadMovies();
-  const idx = movies.findIndex((m) => m.id === id);
-  if (idx === -1) return res.status(404).send();
-  movies[idx] = { ...movies[idx], scheduled: date, host };
-  saveMovies(movies);
-  res.json(movies[idx]);
+  const { id, date, host } = req.body;
+  const movie = MOVIES.find((m) => m.id === id);
+  if (movie) {
+    movie.date = date;
+    movie.host = host;
+    fs.writeFileSync(DATA_PATH, JSON.stringify(MOVIES, null, 2));
+    return res.json({ success: true });
+  }
+  res.status(404).json({ success: false });
 });
 
 app.post("/api/remove", (req, res) => {
   const { id } = req.body;
-  const movies = loadMovies().filter((m) => m.id !== id);
-  saveMovies(movies);
+  MOVIES = MOVIES.filter((m) => m.id !== id);
+  fs.writeFileSync(DATA_PATH, JSON.stringify(MOVIES, null, 2));
   res.json({ success: true });
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🎬 Backend running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`✅ Backend running on port ${PORT}`);
+});
