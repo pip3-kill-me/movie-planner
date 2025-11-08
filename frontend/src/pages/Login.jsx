@@ -1,67 +1,58 @@
 import { useState } from "react";
 import axios from "axios";
-const API_URL = "http://localhost:5000/api";
+import { API_URL } from "./lib/api";
 
 export default function Login({ onLogin }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [remember, setRemember] = useState(false);
   const [error, setError] = useState("");
-  const [fade, setFade] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post(`${API_URL}/login`, { username, password });
+      const res = await axios.post(`${API_URL}/login`, {
+        username,
+        password,
+      });
       if (res.data.success) {
-        localStorage.setItem("loggedIn", "true");
-        localStorage.setItem("username", username);
-        if (remember) localStorage.setItem("remember", "true");
-        setFade(true);
-        setTimeout(onLogin, 400);
+        localStorage.setItem("user", res.data.username);
+        onLogin(res.data.username);
+      } else {
+        setError("Usuário ou senha incorretos");
       }
-    } catch {
+    } catch (err) {
+      console.error(err);
       setError("Usuário ou senha incorretos");
     }
   };
 
   return (
-    <div
-      className={`flex items-center justify-center h-screen bg-gradient-to-br from-[#0e0e10] via-[#111827] to-[#1e1b4b] transition-opacity duration-500 ${
-        fade ? "opacity-0" : "opacity-100"
-      }`}
-    >
+    <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a] text-white">
       <form
         onSubmit={handleLogin}
-        className="bg-gray-900/90 backdrop-blur-xl p-8 rounded-2xl shadow-2xl border border-gray-700 w-80 text-center"
+        className="bg-[#1a1a1a] p-8 rounded-2xl shadow-lg w-80 border border-gray-700"
       >
-        <h1 className="text-2xl mb-6 text-blue-400 font-semibold">🎥 Movie Planner</h1>
+        <h2 className="text-2xl font-bold mb-4 text-center">Login</h2>
+        {error && (
+          <p className="text-red-500 mb-2 text-center text-sm">{error}</p>
+        )}
         <input
-          className="w-full mb-3 px-3 py-2 rounded bg-gray-800 border border-gray-700 text-gray-200"
+          type="text"
           placeholder="Usuário"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
+          className="w-full p-2 mb-3 rounded bg-[#0f0f0f] border border-gray-700 focus:border-blue-500 outline-none"
         />
         <input
-          className="w-full mb-3 px-3 py-2 rounded bg-gray-800 border border-gray-700 text-gray-200"
-          placeholder="Senha"
           type="password"
+          placeholder="Senha"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          className="w-full p-2 mb-5 rounded bg-[#0f0f0f] border border-gray-700 focus:border-blue-500 outline-none"
         />
-        <label className="flex items-center text-gray-400 text-sm mb-3">
-          <input
-            type="checkbox"
-            checked={remember}
-            onChange={(e) => setRemember(e.target.checked)}
-            className="mr-2 accent-blue-500"
-          />
-          Lembrar-me
-        </label>
-        {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
         <button
           type="submit"
-          className="w-full bg-blue-600 hover:bg-blue-700 py-2 rounded text-white font-semibold transition"
+          className="w-full py-2 bg-blue-600 hover:bg-blue-500 rounded-lg font-semibold transition-all"
         >
           Entrar
         </button>
