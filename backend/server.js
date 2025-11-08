@@ -43,11 +43,19 @@ function saveMovies(movies) {
 // LOGIN
 app.post("/api/login", (req, res) => {
   const { username, password } = req.body;
+
+  // find the matching user in the array
   const user = USERS.find(
     (u) => u.username === username && u.password === password
   );
-  if (user) res.json({ success: true });
-  else res.status(401).json({ success: false });
+
+  if (user) {
+    return res.json({ success: true, username: user.username });
+  } else {
+    return res
+      .status(401)
+      .json({ success: false, message: "Usuário ou senha incorretos" });
+  }
 });
 
 // MOVIES
