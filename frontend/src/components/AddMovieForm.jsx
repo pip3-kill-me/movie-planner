@@ -1,84 +1,71 @@
 import { useState } from "react";
 import axios from "axios";
-
-const OMDB_URL = "https://www.omdbapi.com/";
-const apiKey = import.meta.env.VITE_OMDB_KEY;
+import { API_URL } from "../lib/api";
 
 export default function AddMovieForm({ onAdd }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
-  const [selected, setSelected] = useState(null);
 
-  const searchMovies = async (q) => {
-    if (q.length < 2) return setResults([]);
+  const handleSearch = async (e) => {
+    const val = e.target.value;
+    setQuery(val);
+    if (val.length < 3) {
+      setResults([]);
+      return;
+    }
+    const omdbKey = import.meta.env.VITE_OMDB_KEY;
+    const res = await axios.get(
+      `https://www.omdbapi.com/?apikey=${omdbKey}&s=${val}`
+    );
+    if (res.data.Search) setResults(res.data.Search);
+  };
+
+  const handleAdd = async (movie) => {
     try {
-      const res = await axios.get(`${OMDB_URL}?s=${encodeURIComponent(q)}&apikey=${apiKey}`);
-      if (res.data.Search) setResults(res.data.Search.slice(0, 5));
-      else setResults([]);
+      await axios.post(`${API_URL}/add-movie`, {
+        id: movie.imdbID,
+        title: movie.Title,
+        year: movie.Year,
+        poster: movie.Poster,
+      });
+      setQuery("");
+      setResults([]);
+      onAdd();
     } catch (err) {
-      console.error("OMDb search error:", err.message);
+      console.error("Error adding movie:", err);
     }
   };
 
-  const handleAdd = async () => {
-    if (!selected) return;
-    const full = await axios.get(`${OMDB_URL}?i=${selected.imdbID}&apikey=${apiKey}`);
-    const info = full.data;
-
-    onAdd({
-      title: info.Title || selected.Title,
-      year: info.Year || selected.Year,
-      poster: info.Poster,
-      plot: info.Plot || "",
-    });
-
-    setQuery("");
-    setResults([]);
-    setSelected(null);
-  };
-
   return (
-    <div className="relative">
-      <div className="flex">
-        <input
-          type="text"
-          placeholder="Digite o nome do filme..."
-          value={query}
-          onChange={(e) => {
-            setQuery(e.target.value);
-            searchMovies(e.target.value);
-          }}
-          className="flex-1 px-3 py-2 rounded-l bg-gray-800 border border-gray-700 text-gray-200"
-        />
-        <button
-          onClick={handleAdd}
-          className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-r text-white font-semibold"
-        >
-          Adicionar
-        </button>
-      </div>
+    <div className="relative w-full max-w-md mx-auto">
+      <input
+        type="text"
+        value={query}
+        onChange={handleSearch}
+        placeholder="Buscar filme..."
+        className="w-full p-3 rounded-lg bg-[#111] border border-gray-700 text-white placeholder-gray-400 focus:border-blue-500 outline-none"
+      />
+
       {results.length > 0 && (
-        <div className="absolute w-full bg-gray-900 border border-gray-700 mt-1 rounded-lg shadow-lg z-50">
-          {results.map((r) => (
-            <div
-              key={r.imdbID}
-              className={`flex items-center p-2 hover:bg-gray-800 cursor-pointer ${
-                selected?.imdbID === r.imdbID ? "bg-gray-800" : ""
-              }`}
-              onClick={() => setSelected(r)}
+        <ul className="absolute left-0 right-0 bg-[#1a1a1a] border border-gray-700 mt-2 rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
+          {results.map((m) => (
+            <li
+              key={m.imdbID}
+              onClick={() => handleAdd(m)}
+              className="p-2 flex items-center hover:bg-[#2a2a2a] cursor-pointer"
             >
               <img
-                src={r.Poster !== "N/A" ? r.Poster : ""}
-                alt=""
+                src={m.Poster !== "N/A" ? m.Poster : ""}
+                alt={m.Title}
                 className="w-10 h-14 object-cover rounded mr-3"
               />
               <div>
-                <div className="text-gray-100 font-semibold">{r.Title}</div>
-                <div className="text-gray-400 text-sm">{r.Year}</div>
+                <p className="text-sm font-semibold">{m.Title}</p>
+                <p className="text-xs text-gray-400">{m.Year}</p>
               </div>
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
     </div>
   );
