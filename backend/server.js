@@ -70,9 +70,38 @@ app.post("/api/login", (req, res) => {
 });
 
 // --- MOVIE ROUTES ---
+// --- MOVIE ROUTES ---
+// Get all movies (always load from disk)
 app.get("/api/movies", (req, res) => {
-  res.json(MOVIES);
+  try {
+    const exists = fs.existsSync(DATA_PATH);
+    if (!exists) {
+      fs.mkdirSync(path.dirname(DATA_PATH), { recursive: true });
+      fs.writeFileSync(DATA_PATH, "[]");
+    }
+
+    const raw = fs.readFileSync(DATA_PATH, "utf8");
+    const list = JSON.parse(raw);
+
+    // normalize legacy field names if needed
+    const normalized = list.map((m) => ({
+      id: m.id || m.imdbID,
+      title: m.title || m.Title,
+      year: m.year || m.Year,
+      poster: m.poster || m.Poster,
+      description: m.description || m.Plot || "",
+      date: m.date || m.scheduled || "",
+      host: m.host || "",
+    }));
+
+    console.log("📤 Returning", normalized.length, "movies from", DATA_PATH);
+    res.json(normalized);
+  } catch (err) {
+    console.error("❌ Error reading movies.json:", err);
+    res.status(500).json([]);
+  }
 });
+
 
 
 // Add a movie
