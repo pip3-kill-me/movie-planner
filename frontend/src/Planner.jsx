@@ -3,31 +3,26 @@ import axios from "axios";
 import AddMovieForm from "./components/AddMovieForm";
 import MovieCard from "./components/MovieCard";
 import MovieCalendar from "./components/Calendar";
-
-import { API_URL /*, WS_URL*/ } from "./lib/api";
+import { API_URL } from "./lib/api";
 
 export default function Planner({ username }) {
   const [movies, setMovies] = useState([]);
 
+  // Load movies once on mount
+  const refreshMovies = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/movies`);
+      setMovies(res.data);
+    } catch (err) {
+      console.error("Failed to fetch movies:", err);
+    }
+  };
+
   useEffect(() => {
-    axios.get(`${API_URL}/movies`).then((r) => setMovies(r.data));
+    refreshMovies();
   }, []);
 
-  const addMovie = async (movieData) => {
-    const res = await axios.post(`${API_URL}/add-movie`, movieData);
-    setMovies((prev) => [...prev, res.data]);
-  };
-
-  const scheduleMovie = async (id, date, host) => {
-    const res = await axios.post(`${API_URL}/schedule`, { id, date, host });
-    setMovies((prev) => prev.map((m) => (m.id === id ? res.data : m)));
-  };
-
-  const removeMovie = async (id) => {
-    await axios.post(`${API_URL}/remove`, { id });
-    setMovies((prev) => prev.filter((m) => m.id !== id));
-  };
-
+  // logout clears local storage
   const logout = () => {
     localStorage.clear();
     window.location.reload();
@@ -39,29 +34,42 @@ export default function Planner({ username }) {
         <h1 className="text-4xl font-bold text-blue-400 drop-shadow">
           🎥 Movie Planner
         </h1>
-        <button
-          onClick={logout}
-          className="bg-red-600 hover:bg-red-700 text-sm px-3 py-1 rounded shadow-sm"
-        >
-          Sair
-        </button>
+        <div className="flex items-center space-x-3">
+          <p className="text-sm text-gray-400">Logado como: {username}</p>
+          <button
+            onClick={logout}
+            className="bg-red-600 hover:bg-red-700 text-sm px-3 py-1 rounded shadow-sm"
+          >
+            Sair
+          </button>
+        </div>
       </div>
 
-      <AddMovieForm onAdd={addMovie} />
+      {/* Add movie search / dropdown */}
+      <AddMovieForm onAdd={refreshMovies} />
 
+      {/* Movie cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-        {movies.map((m) => (
-          <MovieCard
-            key={m.id}
-            movie={m}
-            onSchedule={scheduleMovie}
-            onRemove={removeMovie}
-            username={username}
-          />
-        ))}
+        {movies.length === 0 ? (
+          <p className="text-gray-500 text-center col-span-2">
+            Nenhum filme adicionado ainda.
+          </p>
+        ) : (
+          movies.map((m) => (
+            <MovieCard
+              key={m.id}
+              movie={m}
+              onRemove={refreshMovies}
+              username={username}
+            />
+          ))
+        )}
       </div>
 
-      <MovieCalendar movies={movies} username={username} />
+      {/* Fancy calendar */}
+      <div className="mt-12">
+        <MovieCalendar movies={movies} username={username} />
+      </div>
     </div>
   );
 }
