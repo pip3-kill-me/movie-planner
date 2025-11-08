@@ -15,18 +15,20 @@ export default function Planner({ username, onLogout }) {
 
   // -------- actions (declare each ONCE) --------
   const addMovie = async (movieData) => {
-    try {
-      const res = await axios.post(`${API_URL}/add-movie`, movieData);
-      const movie = res.data;
-      if (movie && movie.id) {
-        setMovies((prev) => [...prev, movie]);
-      } else {
-        console.warn("Invalid movie object from backend:", movie);
-      }
-    } catch (err) {
-      console.error("Add movie failed:", err);
-    }
-  };
+  if (movieData && movieData.id) {
+    // already added by backend return
+    setMovies((prev) => [...prev, movieData]);
+    return;
+  }
+  try {
+    const res = await axios.post(`${API_URL}/add-movie`, movieData);
+    const movie = res.data;
+    setMovies((prev) => [...prev, movie]);
+  } catch (err) {
+    console.error("Add movie failed:", err);
+  }
+};
+
 
   const scheduleMovie = async (id, date, host) => {
     try {

@@ -60,9 +60,9 @@ export default function MovieCalendar({ movies, username }) {
   const events = useMemo(
     () =>
       movies
-        .filter((m) => m.scheduled)
+        .filter((m) => m.date)
         .map((m) => {
-          const [year, month, day] = m.scheduled.split("-").map(Number);
+          const [year, month, day] = m.date.split("-").map(Number);
           const dateObj = new Date(year, month - 1, day);
           return {
             title: m.title,

@@ -30,20 +30,21 @@ export default function AddMovieForm({ onAdd }) {
 
   // add selected movie to backend
   const handleAdd = async (movie) => {
-    try {
-      await axios.post(`${API_URL}/add-movie`, {
-        id: movie.imdbID,
-        title: movie.Title,
-        year: movie.Year,
-        poster: movie.Poster,
-      });
-      setResults([]);
-      setQuery("");
-      onAdd(); // refresh list
-    } catch (err) {
-      console.error("Add movie failed:", err);
-    }
-  };
+  try {
+    const res = await axios.post(`${API_URL}/add-movie`, {
+      id: movie.imdbID,
+      title: movie.Title,
+      year: movie.Year,
+      poster: movie.Poster,
+    });
+    onAdd(res.data);
+    setResults([]);
+    setQuery("");
+  } catch (err) {
+    console.error("Add movie failed:", err);
+  }
+};
+
 
   return (
     <div className="relative w-full max-w-md mx-auto mb-6">

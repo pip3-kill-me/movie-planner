@@ -75,53 +75,37 @@ app.get("/api/movies", (req, res) => {
 });
 
 
-// --- ADD MOVIE ---
+// Add a movie
 app.post("/api/add-movie", async (req, res) => {
-  const { imdbID, Title, Year, Poster, title, year, poster } = req.body;
+  const { id, title, year, poster } = req.body;
 
   try {
     const omdbKey = process.env.OMDB_KEY || process.env.VITE_OMDB_KEY;
-    let detail = {};
-    if (imdbID) {
-      const r = await fetch(
-        `https://www.omdbapi.com/?apikey=${omdbKey}&i=${imdbID}&plot=short`
-      );
-      detail = await r.json();
-    } else if (title) {
-      const r = await fetch(
-        `https://www.omdbapi.com/?apikey=${omdbKey}&t=${encodeURIComponent(
-          title
-        )}&plot=short`
-      );
-      detail = await r.json();
-    }
+    const detailRes = await fetch(
+      `https://www.omdbapi.com/?apikey=${omdbKey}&i=${id}&plot=short`
+    );
+    const detail = await detailRes.json();
 
     const movie = {
-      id: imdbID || detail.imdbID || String(Date.now()),
-      title: detail.Title || Title || title || "Sem título",
-      year: detail.Year || Year || year || "",
+      id: id || detail.imdbID || String(Date.now()),
+      title: detail.Title || title,
+      year: detail.Year || year,
       poster:
         detail.Poster && detail.Poster !== "N/A"
           ? detail.Poster
-          : Poster && Poster !== "N/A"
-          ? Poster
+          : poster && poster !== "N/A"
+          ? poster
           : "/placeholder.png",
       description: detail.Plot || "",
       date: "",
       host: "",
     };
 
-    // Load, append, save
-    let list = [];
-    try {
-      list = JSON.parse(fs.readFileSync(DATA_PATH, "utf8"));
-      if (!Array.isArray(list)) list = [];
-    } catch {
-      list = [];
-    }
+    const list = fs.existsSync(DATA_PATH)
+      ? JSON.parse(fs.readFileSync(DATA_PATH, "utf8"))
+      : [];
     list.push(movie);
     fs.writeFileSync(DATA_PATH, JSON.stringify(list, null, 2));
-
     res.json(movie);
   } catch (err) {
     console.error("Add movie failed:", err);
@@ -129,19 +113,24 @@ app.post("/api/add-movie", async (req, res) => {
   }
 });
 
-
-
+// Schedule a movie
 app.post("/api/schedule", (req, res) => {
   const { id, date, host } = req.body;
-  const movie = MOVIES.find((m) => m.id === id);
-  if (movie) {
-    movie.date = date;
-    movie.host = host;
-    fs.writeFileSync(DATA_PATH, JSON.stringify(MOVIES, null, 2));
-    return res.json({ success: true });
+  try {
+    const list = fs.existsSync(DATA_PATH)
+      ? JSON.parse(fs.readFileSync(DATA_PATH, "utf8"))
+      : [];
+    const updated = list.map((m) =>
+      m.id === id ? { ...m, date, host } : m
+    );
+    fs.writeFileSync(DATA_PATH, JSON.stringify(updated, null, 2));
+    res.json(updated.find((m) => m.id === id));
+  } catch (err) {
+    console.error("Schedule movie failed:", err);
+    res.status(500).json({ error: "Failed to schedule movie" });
   }
-  res.status(404).json({ success: false });
 });
+
 
 app.post("/api/remove", (req, res) => {
   const { id } = req.body;
