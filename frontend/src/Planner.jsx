@@ -8,21 +8,44 @@ import { API_URL } from "./lib/api";
 export default function Planner({ username }) {
   const [movies, setMovies] = useState([]);
 
-  // Load movies once on mount
-  const refreshMovies = async () => {
+  // Initial load
+  useEffect(() => {
+    axios.get(`${API_URL}/movies`).then((r) => setMovies(r.data));
+  }, []);
+
+  // Add movie — updates instantly
+  const addMovie = async (movieData) => {
     try {
-      const res = await axios.get(`${API_URL}/movies`);
-      setMovies(res.data);
+      const res = await axios.post(`${API_URL}/add-movie`, movieData);
+      // backend doesn’t return object, so append manually
+      setMovies((prev) => [...prev, movieData]);
     } catch (err) {
-      console.error("Failed to fetch movies:", err);
+      console.error("Add movie failed:", err);
     }
   };
 
-  useEffect(() => {
-    refreshMovies();
-  }, []);
+  // Schedule movie (date + host)
+  const scheduleMovie = async (id, date, host) => {
+    try {
+      await axios.post(`${API_URL}/schedule`, { id, date, host });
+      setMovies((prev) =>
+        prev.map((m) => (m.id === id ? { ...m, date, host } : m))
+      );
+    } catch (err) {
+      console.error("Schedule movie failed:", err);
+    }
+  };
 
-  // logout clears local storage
+  // Remove movie
+  const removeMovie = async (id) => {
+    try {
+      await axios.post(`${API_URL}/remove`, { id });
+      setMovies((prev) => prev.filter((m) => m.id !== id));
+    } catch (err) {
+      console.error("Remove movie failed:", err);
+    }
+  };
+
   const logout = () => {
     localStorage.clear();
     window.location.reload();
@@ -30,6 +53,7 @@ export default function Planner({ username }) {
 
   return (
     <div className="max-w-6xl mx-auto p-6 fade-in">
+      {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-4xl font-bold text-blue-400 drop-shadow">
           🎥 Movie Planner
@@ -45,10 +69,10 @@ export default function Planner({ username }) {
         </div>
       </div>
 
-      {/* Add movie search / dropdown */}
-      <AddMovieForm onAdd={refreshMovies} />
+      {/* Add movie */}
+      <AddMovieForm onAdd={addMovie} />
 
-      {/* Movie cards */}
+      {/* Movie grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
         {movies.length === 0 ? (
           <p className="text-gray-500 text-center col-span-2">
@@ -59,14 +83,15 @@ export default function Planner({ username }) {
             <MovieCard
               key={m.id}
               movie={m}
-              onRemove={refreshMovies}
+              onSchedule={scheduleMovie}
+              onRemove={removeMovie}
               username={username}
             />
           ))
         )}
       </div>
 
-      {/* Fancy calendar */}
+      {/* Calendar */}
       <div className="mt-12">
         <MovieCalendar movies={movies} username={username} />
       </div>
