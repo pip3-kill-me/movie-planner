@@ -4,7 +4,7 @@ import Login from "./pages/Login";
 
 export default function App() {
   const [loggedIn, setLoggedIn] = useState(localStorage.getItem("loggedIn") === "true");
-  const [username, setUsername] = useState(localStorage.getItem("username") || "");
+  const [user, setUser] = useState(localStorage.getItem("user") || null);
 
   useEffect(() => {
     if (!localStorage.getItem("remember")) {
