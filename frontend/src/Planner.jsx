@@ -5,31 +5,40 @@ import MovieCard from "./components/MovieCard";
 import MovieCalendar from "./components/Calendar";
 import { API_URL } from "./lib/api";
 
-export default function Planner({ username }) {
+export default function Planner({ username, onLogout }) {
   const [movies, setMovies] = useState([]);
 
-  // Initial load
+  // initial load
   useEffect(() => {
     axios.get(`${API_URL}/movies`).then((r) => setMovies(r.data));
   }, []);
 
-  // Add movie — updates instantly
+  // -------- actions (declare each ONCE) --------
   const addMovie = async (movieData) => {
-  try {
-    const res = await axios.post(`${API_URL}/add-movie`, movieData);
-    const movie = res.data;
-    if (movie && movie.id) {
-      setMovies((prev) => [...prev, movie]);
-    } else {
-      console.warn("Invalid movie object received:", movie);
+    try {
+      const res = await axios.post(`${API_URL}/add-movie`, movieData);
+      const movie = res.data;
+      if (movie && movie.id) {
+        setMovies((prev) => [...prev, movie]);
+      } else {
+        console.warn("Invalid movie object from backend:", movie);
+      }
+    } catch (err) {
+      console.error("Add movie failed:", err);
     }
-  } catch (err) {
-    console.error("Error adding movie:", err);
-  }
-};
+  };
 
+  const scheduleMovie = async (id, date, host) => {
+    try {
+      await axios.post(`${API_URL}/schedule`, { id, date, host });
+      setMovies((prev) =>
+        prev.map((m) => (m.id === id ? { ...m, date, host } : m))
+      );
+    } catch (err) {
+      console.error("Schedule movie failed:", err);
+    }
+  };
 
-  // Remove movie
   const removeMovie = async (id) => {
     try {
       await axios.post(`${API_URL}/remove`, { id });
@@ -38,15 +47,10 @@ export default function Planner({ username }) {
       console.error("Remove movie failed:", err);
     }
   };
-
-  const logout = () => {
-    localStorage.clear();
-    window.location.reload();
-  };
+  // -------- end actions --------
 
   return (
     <div className="max-w-6xl mx-auto p-6 fade-in">
-      {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-4xl font-bold text-blue-400 drop-shadow">
           🎥 Movie Planner
@@ -54,7 +58,7 @@ export default function Planner({ username }) {
         <div className="flex items-center space-x-3">
           <p className="text-sm text-gray-400">Logado como: {username}</p>
           <button
-            onClick={logout}
+            onClick={onLogout ?? (() => { localStorage.clear(); window.location.reload(); })}
             className="bg-red-600 hover:bg-red-700 text-sm px-3 py-1 rounded shadow-sm"
           >
             Sair
@@ -62,10 +66,8 @@ export default function Planner({ username }) {
         </div>
       </div>
 
-      {/* Add movie */}
       <AddMovieForm onAdd={addMovie} />
 
-      {/* Movie grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
         {movies.length === 0 ? (
           <p className="text-gray-500 text-center col-span-2">
@@ -84,7 +86,6 @@ export default function Planner({ username }) {
         )}
       </div>
 
-      {/* Calendar */}
       <div className="mt-12">
         <MovieCalendar movies={movies} username={username} />
       </div>
