@@ -74,25 +74,37 @@ app.get("/api/movies", (req, res) => {
   res.json(MOVIES);
 });
 
-app.post("/api/add-movie", async (req, res) => {
-  const movie = req.body;
+import fetch from "node-fetch"; // at top if not present
 
-  // Try to fetch full details (description)
+app.post("/api/add-movie", async (req, res) => {
+  const { title, imdbID } = req.body;
+
   try {
-    const fetch = (await import("node-fetch")).default;
     const omdbKey = process.env.OMDB_KEY || process.env.VITE_OMDB_KEY;
     const detail = await fetch(
-      `https://www.omdbapi.com/?apikey=${omdbKey}&i=${movie.id}&plot=short`
+      `https://www.omdbapi.com/?apikey=${omdbKey}&i=${imdbID || ""}&t=${encodeURIComponent(title)}`
     ).then((r) => r.json());
 
-    movie.description = detail.Plot || "";
-  } catch {
-    movie.description = "";
-  }
+    const movie = {
+      id: imdbID || detail.imdbID || Date.now().toString(),
+      title: detail.Title || title,
+      year: detail.Year || "",
+      poster:
+        detail.Poster && detail.Poster !== "N/A"
+          ? detail.Poster
+          : "/placeholder.png",
+      description: detail.Plot || "",
+      date: "",
+      host: "",
+    };
 
-  MOVIES.push(movie);
-  fs.writeFileSync(DATA_PATH, JSON.stringify(MOVIES, null, 2));
-  res.json(movie);
+    MOVIES.push(movie);
+    fs.writeFileSync(DATA_PATH, JSON.stringify(MOVIES, null, 2));
+    res.json(movie);
+  } catch (err) {
+    console.error("Add movie failed:", err);
+    res.status(500).json({ error: "Failed to add movie" });
+  }
 });
 
 

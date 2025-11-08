@@ -15,26 +15,19 @@ export default function Planner({ username }) {
 
   // Add movie — updates instantly
   const addMovie = async (movieData) => {
-    try {
-      const res = await axios.post(`${API_URL}/add-movie`, movieData);
-      // backend doesn’t return object, so append manually
-      setMovies((prev) => [...prev, movieData]);
-    } catch (err) {
-      console.error("Add movie failed:", err);
+  try {
+    const res = await axios.post(`${API_URL}/add-movie`, movieData);
+    const movie = res.data;
+    if (movie && movie.id) {
+      setMovies((prev) => [...prev, movie]);
+    } else {
+      console.warn("Invalid movie object received:", movie);
     }
-  };
+  } catch (err) {
+    console.error("Error adding movie:", err);
+  }
+};
 
-  // Schedule movie (date + host)
-  const scheduleMovie = async (id, date, host) => {
-    try {
-      await axios.post(`${API_URL}/schedule`, { id, date, host });
-      setMovies((prev) =>
-        prev.map((m) => (m.id === id ? { ...m, date, host } : m))
-      );
-    } catch (err) {
-      console.error("Schedule movie failed:", err);
-    }
-  };
 
   // Remove movie
   const removeMovie = async (id) => {
