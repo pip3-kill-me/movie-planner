@@ -55,7 +55,7 @@ export default function Planner({ username, onLogout }) {
     <div className="max-w-6xl mx-auto p-6 fade-in">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-4xl font-bold text-blue-400 drop-shadow">
-          🎥 Movie Planner
+          🎥 nossa lista
         </h1>
         <div className="flex items-center space-x-3">
           <p className="text-sm text-gray-400">Logado como: {username}</p>
