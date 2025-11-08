@@ -18,7 +18,7 @@ const __dirname = path.dirname(__filename);
 const DATA_PATH = path.join(__dirname, "data", "movies.json");
 const USERS_PATH = path.join(__dirname, "data", "users.json");
 
-// --- Load or initialize persistent data ---
+
 let MOVIES = [];
 let USERS = [];
 

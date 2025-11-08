@@ -1,26 +1,33 @@
 import { useState, useEffect } from "react";
-import Planner from "./Planner";
 import Login from "./pages/Login";
+import Planner from "./Planner";
 
 export default function App() {
-  const [loggedIn, setLoggedIn] = useState(localStorage.getItem("loggedIn") === "true");
-  const [user, setUser] = useState(localStorage.getItem("user") || null);
+  const [username, setUsername] = useState(null);
 
+  // Restore saved session
   useEffect(() => {
-    if (!localStorage.getItem("remember")) {
-      localStorage.removeItem("loggedIn");
-      localStorage.removeItem("username");
-    }
+    const saved = localStorage.getItem("user");
+    if (saved) setUsername(saved);
   }, []);
 
-  return loggedIn ? (
-    <Planner username={username} />
-  ) : (
-    <Login
-      onLogin={() => {
-        setLoggedIn(true);
-        setUsername(localStorage.getItem("username"));
-      }}
-    />
+  const handleLogin = (name) => {
+    setUsername(name);
+    localStorage.setItem("user", name);
+  };
+
+  const handleLogout = () => {
+    setUsername(null);
+    localStorage.removeItem("user");
+  };
+
+  return (
+    <div className="min-h-screen bg-[#0a0a0f] text-white">
+      {!username ? (
+        <Login onLogin={handleLogin} />
+      ) : (
+        <Planner username={username} onLogout={handleLogout} />
+      )}
+    </div>
   );
 }
