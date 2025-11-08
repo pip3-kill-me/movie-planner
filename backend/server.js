@@ -74,38 +74,48 @@ app.get("/api/movies", (req, res) => {
   res.json(MOVIES);
 });
 
-import fetch from "node-fetch"; // at top if not present
 
 app.post("/api/add-movie", async (req, res) => {
-  const { title, imdbID } = req.body;
+  const { imdbID, Title, Year, Poster } = req.body;
 
   try {
     const omdbKey = process.env.OMDB_KEY || process.env.VITE_OMDB_KEY;
-    const detail = await fetch(
-      `https://www.omdbapi.com/?apikey=${omdbKey}&i=${imdbID || ""}&t=${encodeURIComponent(title)}`
-    ).then((r) => r.json());
+    let detail = {};
+    if (imdbID) {
+      const r = await fetch(`https://www.omdbapi.com/?apikey=${omdbKey}&i=${imdbID}&plot=short`);
+      detail = await r.json();
+    }
 
     const movie = {
-      id: imdbID || detail.imdbID || Date.now().toString(),
-      title: detail.Title || title,
-      year: detail.Year || "",
+      id: imdbID || detail.imdbID || String(Date.now()),
+      title: detail.Title || Title || "Sem título",
+      year: detail.Year || Year || "",
       poster:
-        detail.Poster && detail.Poster !== "N/A"
-          ? detail.Poster
-          : "/placeholder.png",
+        (detail.Poster && detail.Poster !== "N/A" ? detail.Poster : null) ??
+        (Poster && Poster !== "N/A" ? Poster : "/placeholder.png"),
       description: detail.Plot || "",
       date: "",
       host: "",
     };
 
-    MOVIES.push(movie);
-    fs.writeFileSync(DATA_PATH, JSON.stringify(MOVIES, null, 2));
-    res.json(movie);
+    // load current list from disk defensively
+    let list = [];
+    try {
+      list = JSON.parse(fs.readFileSync(DATA_PATH, "utf8"));
+      if (!Array.isArray(list)) list = [];
+    } catch {
+      list = [];
+    }
+
+    list.push(movie);
+    fs.writeFileSync(DATA_PATH, JSON.stringify(list, null, 2));
+    return res.json(movie);
   } catch (err) {
     console.error("Add movie failed:", err);
-    res.status(500).json({ error: "Failed to add movie" });
+    return res.status(500).json({ error: "Failed to add movie" });
   }
 });
+
 
 
 app.post("/api/schedule", (req, res) => {
