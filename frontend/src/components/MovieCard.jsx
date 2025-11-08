@@ -9,9 +9,17 @@ export default function MovieCard({ movie, onSchedule, onRemove, username }) {
     onSchedule(movie.id, date, host);
   };
 
+  // Determine house label for display
+  const houseLabel = movie.host
+    ? movie.host === username
+      ? "na sua casa"
+      : `na casa de ${movie.host}`
+    : "";
+
   return (
-    <div className="bg-[#111] p-4 rounded-lg border border-gray-800 shadow hover:shadow-blue-600/20 transition-all">
-      <div className="flex gap-4">
+    <div className="bg-gradient-to-br from-[#161616] to-[#0d0d0d] border border-gray-800 rounded-2xl overflow-hidden shadow-xl hover:shadow-blue-600/20 transition-all group">
+      {/* Poster */}
+      <div className="relative">
         <img
           src={
             movie.poster && movie.poster !== "N/A"
@@ -19,54 +27,61 @@ export default function MovieCard({ movie, onSchedule, onRemove, username }) {
               : "/placeholder.png"
           }
           alt={movie.title}
-          className="w-24 h-36 object-cover rounded"
+          className="w-full h-72 object-cover opacity-90 group-hover:opacity-100 transition-all"
         />
-        <div className="flex flex-col justify-between flex-1">
-          <div>
-            <h2 className="text-lg font-semibold text-blue-400">
-              {movie.title}
-            </h2>
-            <p className="text-gray-400 text-sm">{movie.year}</p>
-            {movie.description && (
-              <p className="text-gray-500 text-xs mt-2 line-clamp-3">
-                {movie.description}
-              </p>
-            )}
-          </div>
+        <div className="absolute bottom-0 w-full bg-gradient-to-t from-black/70 to-transparent p-4">
+          <h2 className="text-xl font-bold text-blue-400 drop-shadow-md">
+            {movie.title}
+          </h2>
+          <p className="text-gray-300 text-sm">{movie.year}</p>
+          {movie.date && movie.host && (
+            <p className="text-sm text-blue-400 mt-1">
+              📅 {movie.date} {houseLabel}
+            </p>
+          )}
+        </div>
+      </div>
 
-          <div className="mt-3 flex items-center gap-2">
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="bg-[#222] border border-gray-700 text-sm px-2 py-1 rounded"
-            />
-            <select
-              value={host}
-              onChange={(e) => setHost(e.target.value)}
-              className="bg-[#222] border border-gray-700 text-sm px-2 py-1 rounded"
-            >
-              <option value="">Casa de...</option>
-              <option value={username === "matheus" ? "roberta" : "matheus"}>
-                {username === "matheus" ? "Casa da Roberta" : "Casa do Matheus"}
-              </option>
-              <option value={username}>
-                {username === "matheus" ? "Casa do Matheus" : "Casa da Roberta"}
-              </option>
-            </select>
-            <button
-              onClick={handleSchedule}
-              className="bg-blue-600 hover:bg-blue-700 text-xs px-3 py-1 rounded"
-            >
-              Agendar
-            </button>
-            <button
-              onClick={() => onRemove(movie.id)}
-              className="bg-red-600 hover:bg-red-700 text-xs px-3 py-1 rounded"
-            >
-              Remover
-            </button>
-          </div>
+      {/* Info / actions */}
+      <div className="p-4 flex flex-col justify-between h-full">
+        {movie.description && (
+          <p className="text-gray-400 text-sm mb-4 line-clamp-3">
+            {movie.description}
+          </p>
+        )}
+
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-auto">
+          {!movie.date && (
+            <div className="flex flex-col sm:flex-row gap-2">
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="bg-[#111] border border-gray-700 rounded-lg p-2 text-sm text-white"
+              />
+              <select
+                value={host}
+                onChange={(e) => setHost(e.target.value)}
+                className="bg-[#111] border border-gray-700 rounded-lg p-2 text-sm text-white"
+              >
+                <option value="">Casa de...</option>
+                <option value="matheus">Casa do Matheus</option>
+                <option value="roberta">Casa da Roberta</option>
+              </select>
+              <button
+                onClick={handleSchedule}
+                className="bg-blue-600 hover:bg-blue-500 px-3 py-2 rounded-lg text-sm font-medium transition"
+              >
+                Agendar
+              </button>
+            </div>
+          )}
+          <button
+            onClick={() => onRemove(movie.id)}
+            className="bg-red-600 hover:bg-red-500 px-3 py-2 rounded-lg text-sm font-medium transition self-end sm:self-auto"
+          >
+            Remover
+          </button>
         </div>
       </div>
     </div>
