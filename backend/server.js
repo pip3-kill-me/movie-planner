@@ -122,30 +122,47 @@ app.post("/api/add-movie", async (req, res) => {
       poster:
         detail.Poster && detail.Poster !== "N/A"
           ? detail.Poster
-          : poster && poster !== "N/A"
-          ? poster
-          : "/placeholder.png",
+          : poster || "/placeholder.png",
       description: detail.Plot || "",
       date: "",
       host: "",
     };
 
+    // atomic write
     const list = fs.existsSync(DATA_PATH)
       ? JSON.parse(fs.readFileSync(DATA_PATH, "utf8"))
       : [];
     list.push(movie);
     fs.writeFileSync(DATA_PATH, JSON.stringify(list, null, 2));
+
     res.json(movie);
   } catch (err) {
-    console.error("Add movie failed:", err);
+    console.error("❌ Add movie failed:", err);
     res.status(500).json({ error: "Failed to add movie" });
   }
 });
 
-// Schedule a movie
-app.post("/api/schedule", (req, res) => {
-  const { id, date, host } = req.body;
+// Remove a movie
+app.post("/api/remove", (req, res) => {
   try {
+    const { id } = req.body;
+    const list = fs.existsSync(DATA_PATH)
+      ? JSON.parse(fs.readFileSync(DATA_PATH, "utf8"))
+      : [];
+    const filtered = list.filter((m) => m.id !== id);
+    fs.writeFileSync(DATA_PATH, JSON.stringify(filtered, null, 2));
+    console.log("🗑️ Removed movie", id);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("❌ Remove failed:", err);
+    res.status(500).json({ error: "Failed to remove" });
+  }
+});
+
+// Schedule movie
+app.post("/api/schedule", (req, res) => {
+  try {
+    const { id, date, host } = req.body;
     const list = fs.existsSync(DATA_PATH)
       ? JSON.parse(fs.readFileSync(DATA_PATH, "utf8"))
       : [];
@@ -155,18 +172,11 @@ app.post("/api/schedule", (req, res) => {
     fs.writeFileSync(DATA_PATH, JSON.stringify(updated, null, 2));
     res.json(updated.find((m) => m.id === id));
   } catch (err) {
-    console.error("Schedule movie failed:", err);
-    res.status(500).json({ error: "Failed to schedule movie" });
+    console.error("❌ Schedule failed:", err);
+    res.status(500).json({ error: "Failed to schedule" });
   }
 });
 
-
-app.post("/api/remove", (req, res) => {
-  const { id } = req.body;
-  MOVIES = MOVIES.filter((m) => m.id !== id);
-  fs.writeFileSync(DATA_PATH, JSON.stringify(MOVIES, null, 2));
-  res.json({ success: true });
-});
 
 app.listen(PORT, () => {
   console.log(`✅ Backend running on port ${PORT}`);
