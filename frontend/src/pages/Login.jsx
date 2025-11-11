@@ -22,7 +22,7 @@ export default function Login({ onLogin }) {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-[#0a0a0f] to-[#111] text-white">
-      <h1 className="text-4xl font-bold mb-6 text-blue-400">🎬 Movie Planner</h1>
+      <h1 className="text-4xl font-bold mb-6 text-blue-400">🎬 nossa lista</h1>
 
       <form
         onSubmit={handleLogin}

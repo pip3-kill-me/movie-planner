@@ -9,16 +9,16 @@ export default function MovieCard({ movie, onSchedule, onRemove, username }) {
     onSchedule(movie.id, date, host);
   };
 
-  // Determine how to describe where it will be watched
-  const houseLabel = movie.host
-    ? movie.host === username
+  const houseLabel =
+    movie.host === username
       ? "na sua casa"
-      : `na casa de ${movie.host}`
-    : "";
+      : movie.host
+      ? `na casa de ${movie.host}`
+      : "";
 
   return (
-    <div className="relative bg-[#111111] rounded-2xl border border-gray-800 overflow-hidden shadow-lg hover:shadow-blue-600/30 transition-all flex flex-col">
-      {/* Poster section */}
+    <div className="bg-[#111] border border-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-blue-600/30 transition-all flex flex-col">
+      {/* Poster */}
       <div className="relative w-full aspect-[2/3] bg-black">
         <img
           src={
@@ -29,8 +29,6 @@ export default function MovieCard({ movie, onSchedule, onRemove, username }) {
           alt={movie.title}
           className="w-full h-full object-cover"
         />
-
-        {/* Overlay text on bottom of poster */}
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-3">
           <h2 className="text-lg font-semibold text-blue-400 truncate">
             {movie.title}
@@ -53,8 +51,8 @@ export default function MovieCard({ movie, onSchedule, onRemove, username }) {
 
       {/* Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 pb-4 mt-auto">
-        {/* Show scheduling inputs if missing either date or host */}
-        {(!movie.date || !movie.host) && (
+        {/* Show scheduling controls only if not yet scheduled */}
+        {(!movie.date || !movie.host) ? (
           <div className="flex flex-col sm:flex-row gap-2 sm:items-center w-full sm:w-auto">
             <input
               type="date"
@@ -78,10 +76,16 @@ export default function MovieCard({ movie, onSchedule, onRemove, username }) {
               Agendar
             </button>
           </div>
+        ) : (
+          <div className="text-sm text-blue-400 flex-1">
+            📅 {movie.date} {houseLabel}
+          </div>
         )}
+
+        {/* Remove button always visible */}
         <button
           onClick={() => onRemove(movie.id)}
-          className="bg-red-600 hover:bg-red-500 px-4 py-2 rounded-lg text-sm font-medium transition self-end sm:self-auto w-full sm:w-auto"
+          className="bg-red-600 hover:bg-red-500 px-4 py-2 rounded-lg text-sm font-medium transition w-full sm:w-auto"
         >
           Remover
         </button>
