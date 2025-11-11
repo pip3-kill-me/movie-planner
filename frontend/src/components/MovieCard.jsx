@@ -53,18 +53,19 @@ export default function MovieCard({ movie, onSchedule, onRemove, username }) {
 
       {/* Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 pb-4 mt-auto">
-        {!movie.date && (
-          <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+        {/* Show scheduling inputs if missing either date or host */}
+        {(!movie.date || !movie.host) && (
+          <div className="flex flex-col sm:flex-row gap-2 sm:items-center w-full sm:w-auto">
             <input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="bg-[#1a1a1a] border border-gray-700 rounded-lg px-3 py-2 text-sm text-white"
+              className="bg-[#1a1a1a] border border-gray-700 rounded-lg px-3 py-2 text-sm text-white w-full sm:w-auto"
             />
             <select
               value={host}
               onChange={(e) => setHost(e.target.value)}
-              className="bg-[#1a1a1a] border border-gray-700 rounded-lg px-3 py-2 text-sm text-white"
+              className="bg-[#1a1a1a] border border-gray-700 rounded-lg px-3 py-2 text-sm text-white w-full sm:w-auto"
             >
               <option value="">Casa de...</option>
               <option value="matheus">Casa do Matheus</option>
@@ -72,7 +73,7 @@ export default function MovieCard({ movie, onSchedule, onRemove, username }) {
             </select>
             <button
               onClick={handleSchedule}
-              className="bg-blue-600 hover:bg-blue-500 px-3 py-2 rounded-lg text-sm font-medium transition"
+              className="bg-blue-600 hover:bg-blue-500 px-3 py-2 rounded-lg text-sm font-medium transition w-full sm:w-auto"
             >
               Agendar
             </button>
@@ -80,7 +81,7 @@ export default function MovieCard({ movie, onSchedule, onRemove, username }) {
         )}
         <button
           onClick={() => onRemove(movie.id)}
-          className="bg-red-600 hover:bg-red-500 px-4 py-2 rounded-lg text-sm font-medium transition self-end sm:self-auto"
+          className="bg-red-600 hover:bg-red-500 px-4 py-2 rounded-lg text-sm font-medium transition self-end sm:self-auto w-full sm:w-auto"
         >
           Remover
         </button>
