@@ -52,7 +52,7 @@ export default function MovieCard({ movie, onSchedule, onRemove, username }) {
       {/* Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 pb-4 mt-auto">
         {/* Show scheduling controls only if not yet scheduled */}
-        {(!movie.date || !movie.host) ? (
+        {(!movie.date || !movie.host) && (
           <div className="flex flex-col sm:flex-row gap-2 sm:items-center w-full sm:w-auto">
             <input
               type="date"
@@ -76,16 +76,10 @@ export default function MovieCard({ movie, onSchedule, onRemove, username }) {
               Agendar
             </button>
           </div>
-        ) : (
-          <div className="text-sm text-blue-400 flex-1">
-            📅 {movie.date} {houseLabel}
-          </div>
         )}
-
-        {/* Remove button always visible */}
         <button
           onClick={() => onRemove(movie.id)}
-          className="bg-red-600 hover:bg-red-500 px-4 py-2 rounded-lg text-sm font-medium transition w-full sm:w-auto"
+          className="bg-red-600 hover:bg-red-500 px-4 py-2 rounded-lg text-sm font-medium transition self-end sm:self-auto w-full sm:w-auto"
         >
           Remover
         </button>
